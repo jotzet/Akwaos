@@ -15,13 +15,8 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\..\..\Downloads\02_getting_an_image_on_the_screen\02_getting_an_image_on_the_screen\02_getting_an_image_on_the_screen.cpp">
+    <ClCompile Include="..\02_getting_an_image_on_the_screen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="..\..\..\..\..\..\Downloads\02_getting_an_image_on_the_screen\02_getting_an_image_on_the_screen\hello_world.bmp">
-      <Filter>Source Files</Filter>
-    </Image>
   </ItemGroup>
 </Project>

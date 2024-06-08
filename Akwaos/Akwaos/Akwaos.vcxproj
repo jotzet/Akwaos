@@ -19,10 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\..\..\Downloads\02_getting_an_image_on_the_screen\02_getting_an_image_on_the_screen\02_getting_an_image_on_the_screen.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="..\..\..\..\..\..\Downloads\02_getting_an_image_on_the_screen\02_getting_an_image_on_the_screen\hello_world.bmp" />
+    <ClCompile Include="..\02_getting_an_image_on_the_screen.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -77,8 +74,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\Users\Jakub\OneDrive - Polsko-Japońska Akademia Technik Komputerowych\Desktop\Akwa\Akwaos\vclib\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\Jakub\OneDrive - Polsko-Japońska Akademia Technik Komputerowych\Desktop\Akwa\Akwaos\vclib\lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\Jakub\source\repos\Akwaos\Akwaos\vclib\include;C:\Users\Jakub\OneDrive - Polsko-Japońska Akademia Technik Komputerowych\Desktop\Akwa\Akwaos\vclib\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\Jakub\source\repos\Akwaos\Akwaos\vclib\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
