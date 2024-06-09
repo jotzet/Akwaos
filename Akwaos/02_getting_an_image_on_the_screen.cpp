@@ -8,41 +8,54 @@
 
 const int SCREEN_WIDTH = 1300;
 const int SCREEN_HEIGHT = 800;
+
+//max num of fish that can be inside the akwaos
+const int MAX_FISH = 100;
+//num of fish that ARE inside the akwaos
+int totalFish;
+
 const std::string PATH = "C:\\Users\\Jakub\\source\\repos\\Akwaos\\Akwaos\\x64\\Debug\\";
+
+
 
 bool init();
 bool loadMedia();
 void close();
 void spawnObjects(int num, std::vector<class swimmingObject>& swimmingObjects);
 bool checkCollision(const swimmingObject& a, const swimmingObject& b);
-
+void reproduce(const swimmingObject& parent, std::vector<swimmingObject>& newFish);
+void spawn(int num, std::vector<swimmingObject>& spawnGroup, std::string name);
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
 
 
 struct Texture
 {
-    std::string name;
     SDL_Texture* texture;
     std::string path;
 };
 
 std::map<std::string, Texture> textures = {
-    {"water", {"water", nullptr, PATH + "water.bmp"}},
-    {"swimmingObject", {"swimmingObject", nullptr, PATH + "swimmingObject.bmp"}},
-    {"basicFish", {"basicFish", nullptr, PATH + "basicFish.bmp"}},
-    {"goldFish", {"goldFish", nullptr, PATH + "goldFish.bmp"}},
-    {"crazyFish", {"crazyFish", nullptr, PATH + "crazyFish.bmp"}},
-    {"dumbFish", {"dumbFish", nullptr, PATH + "dumbFish.bmp"}}
+    {"water",  {nullptr, PATH + "water.bmp"}},
+    {"swimmingObject", {nullptr, PATH + "swimmingObject.bmp"}},
+    {"basicFish", {nullptr, PATH + "basicFish.bmp"}},
+    {"goldFish", {nullptr, PATH + "goldFish.bmp"}},
+    {"crazyFish", { nullptr, PATH + "crazyFish.bmp"}},
+    {"dumbFish", { nullptr, PATH + "dumbFish.bmp"}},
+    {"aggressiveFish", { nullptr, PATH + "aggressiveFish.bmp"}}
 };
 
 class swimmingObject
 {
 public:
+    std::string name;
     int posX, posY;
     int velocityX, velocityY;
     int width, height;
     int speed;
+    int randomnessX;
+    int randomnessY;
+    double reproductionRate;
     SDL_Texture* texture;
 
     swimmingObject()
@@ -51,6 +64,10 @@ public:
         width(34),
         height(14),
         speed(1),
+        randomnessX(1),
+		randomnessY(1),
+		reproductionRate(1),
+        name("swimmingObject"),
         texture(textures["swimmingObject"].texture)
     {
         posX = std::rand() % (SCREEN_WIDTH - width);
@@ -69,10 +86,10 @@ public:
         posY += velocityY * speed;
 
         //Random behaviour
-        if (std::rand() % 100 == 0) {
+        if ((std::rand() % 100 ) < randomnessX ) {
             velocityX = -velocityX;
         }
-        if (std::rand() % 200 == 0) {
+        if ((std::rand() % 100) < randomnessY ) {
             velocityY = -velocityY;
         }
 
@@ -97,8 +114,19 @@ public:
         //Colision w/ other objects
         for (size_t i = 0; i < swimmingObjects.size(); ++i) {
             if (&swimmingObjects[i] != this && checkCollision(*this, swimmingObjects[i])) {
-                velocityX = -velocityX;
-                velocityY = -velocityY;
+               
+                //upon meeting fish of the same species, they have a chance to reproduce
+                if (name == swimmingObjects[i].name && (std::rand() % 100) < reproductionRate) {
+                    spawn(1, swimmingObjects, name);
+                }
+                //upon meeting aggressiveFish it can eat other fish
+                else if (name == "aggressiveFish" && swimmingObjects[i].name != "aggressiveFish" && (std::rand() % 100) < 10)
+                {
+                    swimmingObjects.erase(swimmingObjects.begin() + i);
+                    totalFish--;
+                }
+
+
             }
         }
     }
@@ -116,8 +144,10 @@ class basicFish : public swimmingObject
 public:
     basicFish() : swimmingObject()
     {
+        reproductionRate = 1;
         texture = textures["basicFish"].texture;
         speed = 2;
+        name = "basicFish";
     }
 };
 
@@ -126,10 +156,28 @@ class goldFish : public swimmingObject
 public:
     goldFish() : swimmingObject()
     {
+        reproductionRate = 1;
         width = 16;
         height = 12;
         texture = textures["goldFish"].texture;
         speed = 2;
+        name = "goldFish";
+    }
+};
+
+class aggressiveFish : public swimmingObject
+{
+public:
+    aggressiveFish() : swimmingObject()
+    {
+        reproductionRate = 0.0001;
+        randomnessX = 1;
+        randomnessY = 1;
+        width = 200;
+        height = 77;
+        texture = textures["aggressiveFish"].texture;
+        speed = 1;
+        name = "aggressiveFish";
     }
 };
 
@@ -138,10 +186,14 @@ class crazyFish : public swimmingObject
 public:
     crazyFish() : swimmingObject()
     {
+        reproductionRate = 1;
+        randomnessX = 5;
+        randomnessY = 10;
         width = 54;
         height = 23;
         texture = textures["crazyFish"].texture;
         speed = 3;
+        name = "crazyFish";
     }
 };
 
@@ -150,24 +202,60 @@ class dumbFish : public swimmingObject
 public:
     dumbFish() : swimmingObject()
     {
+        reproductionRate = 3;
         width = 54;
         height = 23;
         texture = textures["dumbFish"].texture;
         speed = 1;
+        name = "dumbFish";
     }
 };
 
+void spawn(int num, std::vector<swimmingObject>& spawnGroup, std::string name)
+{
+    if (totalFish < MAX_FISH) {
+        for (int i = 0; i < num; ++i)
+        {
+            if (name == "basicFish")
+            {
+                spawnGroup.push_back(basicFish());
+            }
+            else if (name == "goldFish")
+            {
+                spawnGroup.push_back(goldFish());
+            }
+            else if (name == "crazyFish")
+            {
+                spawnGroup.push_back(crazyFish());
+            }
+            else if (name == "dumbFish")
+            {
+                spawnGroup.push_back(dumbFish());
+            }
+            else if (name == "aggressiveFish")
+            {
+                spawnGroup.push_back(aggressiveFish());
+            }
+            else
+            {
+                spawnGroup.push_back(swimmingObject());
+            }
+            totalFish++;
+        }
+    }
+}
+
 
 bool checkCollision(const swimmingObject& a, const swimmingObject& b) {
-    int leftA = a.posX - 2;
-    int rightA = a.posX + a.width + 2;
-    int topA = a.posY - 2 ;
-    int bottomA = a.posY + a.height + 2;
+    int leftA = a.posX;
+    int rightA = a.posX + a.width;
+    int topA = a.posY;
+    int bottomA = a.posY + a.height;
 
-    int leftB = b.posX - 2;
-    int rightB = b.posX + b.width + 2;
-    int topB = b.posY - 2;
-    int bottomB = b.posY + b.height + 2;
+    int leftB = b.posX;
+    int rightB = b.posX + b.width;
+    int topB = b.posY;
+    int bottomB = b.posY + b.height;
 
     if (bottomA <= topB) {
         return false;
@@ -270,33 +358,6 @@ void close() {
     SDL_Quit();
 }
 
-void spawn(int num, std::vector<swimmingObject>& spawnGroup, int type)
-{
-    for (int i = 0; i < num; ++i)
-    {
-        if (type == 1)
-        {
-            spawnGroup.push_back(basicFish());
-        }
-        else if (type == 2)
-        {
-            spawnGroup.push_back(goldFish());
-        }
-        else if (type == 3)
-        {
-            spawnGroup.push_back(crazyFish());
-        }
-        else if (type == 4)
-        {
-            spawnGroup.push_back(dumbFish());
-        }
-        else
-        {
-            spawnGroup.push_back(swimmingObject());
-        }
-    }
-}
-
 int main(int argc, char* args[]) {
     if (!init()) {
         printf("Failed to initialize!\n");
@@ -307,10 +368,11 @@ int main(int argc, char* args[]) {
         }
         else {
             std::vector<swimmingObject> spawnGroup;
-            spawn(10, spawnGroup, 1);
-            spawn(5, spawnGroup, 2);
-            spawn(1, spawnGroup, 3);
-            spawn(2, spawnGroup, 4);
+            spawn(15, spawnGroup, "basicFish");
+            spawn(10, spawnGroup, "goldFish");
+            spawn(5, spawnGroup, "crazyFish");
+            spawn(8, spawnGroup, "dumbFish");
+            spawn(1, spawnGroup, "aggressiveFish");
 
             bool quit = false;
             SDL_Event e;
