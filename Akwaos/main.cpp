@@ -42,7 +42,8 @@ std::map<std::string, Texture> textures = {
     {"goldFish", {nullptr, PATH + "goldFish.bmp"}},
     {"crazyFish", { nullptr, PATH + "crazyFish.bmp"}},
     {"dumbFish", { nullptr, PATH + "dumbFish.bmp"}},
-    {"aggressiveFish", { nullptr, PATH + "aggressiveFish.bmp"}}
+    {"aggressiveFish", { nullptr, PATH + "aggressiveFish.bmp"}},
+    {"disgustingFish", { nullptr, PATH + "disgustingFish.bmp"}}
 };
 
 class swimmingObject
@@ -119,11 +120,15 @@ public:
                 if (name == swimmingObjects[i].name && (std::rand() % 100) < reproductionRate) {
                     spawn(1, swimmingObjects, name);
                 }
+
                 //upon meeting aggressiveFish it can eat other fish
                 else if (name == "aggressiveFish" && swimmingObjects[i].name != "aggressiveFish" && (std::rand() % 100) < 10)
                 {
-                    swimmingObjects.erase(swimmingObjects.begin() + i);
-                    totalFish--;
+                    //nobody wants to eat disgustingFish 
+                    if (swimmingObjects[i].name != "disgustingFish") {
+                        swimmingObjects.erase(swimmingObjects.begin() + i);
+                        totalFish--;
+                    }
                 }
 
 
@@ -156,7 +161,7 @@ class goldFish : public swimmingObject
 public:
     goldFish() : swimmingObject()
     {
-        reproductionRate = 1;
+        reproductionRate = 3;
         width = 16;
         height = 12;
         texture = textures["goldFish"].texture;
@@ -211,6 +216,20 @@ public:
     }
 };
 
+class disgustingFish : public swimmingObject
+{
+public:
+    disgustingFish() : swimmingObject()
+    {
+        reproductionRate = 0.0001;
+        width = 54;
+        height = 23;
+        texture = textures["disgustingFish"].texture;
+        speed = 1;
+        name = "disgustingFish";
+    }
+};
+
 void spawn(int num, std::vector<swimmingObject>& spawnGroup, std::string name)
 {
     if (totalFish < MAX_FISH) {
@@ -235,6 +254,10 @@ void spawn(int num, std::vector<swimmingObject>& spawnGroup, std::string name)
             else if (name == "aggressiveFish")
             {
                 spawnGroup.push_back(aggressiveFish());
+            }
+            else if (name == "disgustingFish")
+            {
+                spawnGroup.push_back(disgustingFish());
             }
             else
             {
@@ -371,8 +394,9 @@ int main(int argc, char* args[]) {
             spawn(15, spawnGroup, "basicFish");
             spawn(10, spawnGroup, "goldFish");
             spawn(5, spawnGroup, "crazyFish");
-            spawn(8, spawnGroup, "dumbFish");
+            spawn(5, spawnGroup, "dumbFish");
             spawn(1, spawnGroup, "aggressiveFish");
+            spawn(2, spawnGroup, "disgustingFish");
 
             bool quit = false;
             SDL_Event e;
