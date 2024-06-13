@@ -1,5 +1,6 @@
 # Akwaos - Aquatic Ecosystem Simulator
 This project is a simple game inspired by John Conway's Game of Life. It simulates an aquatic ecosystem where various types of fish interact. Players can introduce different fish species into the environment and observe how they influence the ecosystem.
+The name Akwaos combines "akwa-" a Polish prefix meaning water-related, with "chaos," highlighting the unpredictable nature of such systems.
 
 # Fish Species
 - Basic Fish
