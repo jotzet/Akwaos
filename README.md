@@ -1,21 +1,21 @@
-# What is it?
+# Akwaos - Aquatic Ecosystem Simulator
 This project is a simple game inspired by John Conway's Game of Life. It simulates an aquatic ecosystem where various types of fish interact. Players can introduce different fish species into the environment and observe how they influence the ecosystem.
 
 # Fish Species
-## Basic Fish
+- Basic Fish
 Characteristics: Standard behavior.
 Reproduction: Normal rate.
-## Goldfish
+- Goldfish
 Characteristics: Small and fast.
 Reproduction: Very rapid.
-## Dumb Fish
+- Dumb Fish
 Characteristics: Slow-moving.
 Reproduction: Extremely rapid.
-## Aggressive Fish
+- Aggressive Fish
 Characteristics: Large, aggressive, and slow.
 Reproduction: Slow.
 Behavior: Consumes other fish.
-## Disgusting Fish
+- Disgusting Fish
 Characteristics: Similar to Basic Fish.
 Special Trait: Cannot be eaten.
 # Running
