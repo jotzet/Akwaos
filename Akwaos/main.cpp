@@ -1,50 +1,47 @@
-#include <SDL.h>
+#include "vclib/include/SDL.h"
 #include <stdio.h>
 #include <map>
 #include <string>
 #include <vector>
 #include <ctime>
 #include <cstdlib>
+#include <cmath> 
 
 const int SCREEN_WIDTH = 1300;
 const int SCREEN_HEIGHT = 800;
 
-//max num of fish that can be inside the akwaos
+// max num of fish that can be inside the akwaos
 const int MAX_FISH = 100;
-//num of fish that ARE inside the akwaos
+// num of fish that ARE inside the akwaos
 int totalFish;
 
-const std::string PATH = "C:\\Users\\Jakub\\source\\repos\\Akwaos\\Akwaos\\x64\\Debug\\";
-
-
+const std::string PATH = "textures\\";
 
 bool init();
 bool loadMedia();
 void close();
-void spawnObjects(int num, std::vector<class swimmingObject>& swimmingObjects);
-bool checkCollision(const swimmingObject& a, const swimmingObject& b);
-void reproduce(const swimmingObject& parent, std::vector<swimmingObject>& newFish);
-void spawn(int num, std::vector<swimmingObject>& spawnGroup, std::string name);
-SDL_Window* gWindow = NULL;
-SDL_Renderer* gRenderer = NULL;
-
+void spawnObjects(int num, std::vector<class swimmingObject> &swimmingObjects);
+bool checkCollision(const swimmingObject &a, const swimmingObject &b);
+void reproduce(const swimmingObject &parent, std::vector<swimmingObject> &newFish);
+void spawn(int num, std::vector<swimmingObject> &spawnGroup, std::string name);
+SDL_Window *gWindow = NULL;
+SDL_Renderer *gRenderer = NULL;
 
 struct Texture
 {
-    SDL_Texture* texture;
+    SDL_Texture *texture;
     std::string path;
 };
 
 std::map<std::string, Texture> textures = {
-    {"water",  {nullptr, PATH + "water.bmp"}},
+    {"water", {nullptr, PATH + "water.bmp"}},
     {"swimmingObject", {nullptr, PATH + "swimmingObject.bmp"}},
     {"basicFish", {nullptr, PATH + "basicFish.bmp"}},
     {"goldFish", {nullptr, PATH + "goldFish.bmp"}},
-    {"crazyFish", { nullptr, PATH + "crazyFish.bmp"}},
-    {"dumbFish", { nullptr, PATH + "dumbFish.bmp"}},
-    {"aggressiveFish", { nullptr, PATH + "aggressiveFish.bmp"}},
-    {"disgustingFish", { nullptr, PATH + "disgustingFish.bmp"}}
-};
+    {"crazyFish", {nullptr, PATH + "crazyFish.bmp"}},
+    {"dumbFish", {nullptr, PATH + "dumbFish.bmp"}},
+    {"aggressiveFish", {nullptr, PATH + "aggressiveFish.bmp"}},
+    {"disgustingFish", {nullptr, PATH + "disgustingFish.bmp"}}};
 
 class swimmingObject
 {
@@ -57,91 +54,99 @@ public:
     int randomnessX;
     int randomnessY;
     double reproductionRate;
-    SDL_Texture* texture;
+    SDL_Texture *texture;
 
     swimmingObject()
         : velocityX((std::rand() % 2) * 2 - 1),
-        velocityY((std::rand() % 2) * 2 - 1),
-        width(34),
-        height(14),
-        speed(1),
-        randomnessX(1),
-		randomnessY(1),
-		reproductionRate(1),
-        name("swimmingObject"),
-        texture(textures["swimmingObject"].texture)
+          velocityY((std::rand() % 2) * 2 - 1),
+          width(34),
+          height(14),
+          speed(1),
+          randomnessX(1),
+          randomnessY(1),
+          reproductionRate(1),
+          name("swimmingObject"),
+          texture(textures["swimmingObject"].texture)
     {
         posX = std::rand() % (SCREEN_WIDTH - width);
         posY = std::rand() % (SCREEN_HEIGHT - height);
     }
 
-    swimmingObject(int x, int y, int velX, int velY, int w, int h, int s, SDL_Texture* tex)
+    swimmingObject(int x, int y, int velX, int velY, int w, int h, int s, SDL_Texture *tex)
         : posX(x), posY(y), velocityX(velX), velocityY(velY),
-        width(w), height(h), speed(s), texture(tex)
+          width(w), height(h), speed(s), texture(tex)
     {
-       
     }
 
-    void updatePosition(std::vector<swimmingObject>& swimmingObjects) {
+    void updatePosition(std::vector<swimmingObject> &swimmingObjects)
+    {
         posX += velocityX * speed;
         posY += velocityY * speed;
 
-        //Random behaviour
-        if ((std::rand() % 100 ) < randomnessX ) {
+        // Random behaviour
+        if ((std::rand() % 100) < randomnessX)
+        {
             velocityX = -velocityX;
         }
-        if ((std::rand() % 100) < randomnessY ) {
+        if ((std::rand() % 100) < randomnessY)
+        {
             velocityY = -velocityY;
         }
 
         // Collision w/ screen edges
-        if (posX < 0) {
-            velocityX = std::abs(velocityX); 
+        if (posX < 0)
+        {
+            velocityX = std::abs(velocityX);
             posX = 0;
         }
-        if (posY < 0) {
+        if (posY < 0)
+        {
             velocityY = std::abs(velocityY);
             posY = 0;
         }
-        if (posX + width > SCREEN_WIDTH) {
-            velocityX = -std::abs(velocityX); 
+        if (posX + width > SCREEN_WIDTH)
+        {
+            velocityX = -std::abs(velocityX);
             posX = SCREEN_WIDTH - width;
         }
-        if (posY + height > SCREEN_HEIGHT) {
-            velocityY = -std::abs(velocityY); 
+        if (posY + height > SCREEN_HEIGHT)
+        {
+            velocityY = -std::abs(velocityY);
             posY = SCREEN_HEIGHT - height;
         }
 
-        //Colision w/ other objects
-        for (size_t i = 0; i < swimmingObjects.size(); ++i) {
-            if (&swimmingObjects[i] != this && checkCollision(*this, swimmingObjects[i])) {
-               
-                //upon meeting fish of the same species, they have a chance to reproduce
-                if (name == swimmingObjects[i].name && (std::rand() % 100) < reproductionRate) {
+        // Colision w/ other objects
+        for (size_t i = 0; i < swimmingObjects.size(); ++i)
+        {
+            if (&swimmingObjects[i] != this && checkCollision(*this, swimmingObjects[i]))
+            {
+
+                // upon meeting fish of the same species, they have a chance to reproduce
+                if (name == swimmingObjects[i].name && (std::rand() % 100) < reproductionRate)
+                {
                     spawn(1, swimmingObjects, name);
                 }
 
-                //upon meeting aggressiveFish it can eat other fish
-                else if (name == "aggressiveFish" && swimmingObjects[i].name != "aggressiveFish" && (std::rand() % 100) < 10)
+                // upon meeting aggressiveFish it can eat other fish
+                else if (name == "aggressiveFish" && swimmingObjects[i].name != "aggressiveFish")
                 {
-                    //nobody wants to eat disgustingFish 
-                    if (swimmingObjects[i].name != "disgustingFish") {
+                    // nobody wants to eat disgustingFish
+                    if (swimmingObjects[i].name != "disgustingFish")
+                    {
                         swimmingObjects.erase(swimmingObjects.begin() + i);
                         totalFish--;
                     }
                 }
-
-
             }
         }
     }
 
-    void render() const {
-        SDL_Rect objectRect = { posX, posY, width, height };
+    void render() const
+    {
+        SDL_Rect objectRect = {posX, posY, width, height};
         SDL_RendererFlip flip = (velocityX > 0) ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
         SDL_RenderCopyEx(gRenderer, texture, NULL, &objectRect, 0, NULL, flip);
     }
-
 };
 
 class basicFish : public swimmingObject
@@ -149,7 +154,7 @@ class basicFish : public swimmingObject
 public:
     basicFish() : swimmingObject()
     {
-        reproductionRate = 1;
+        reproductionRate = 20;
         texture = textures["basicFish"].texture;
         speed = 2;
         name = "basicFish";
@@ -161,7 +166,7 @@ class goldFish : public swimmingObject
 public:
     goldFish() : swimmingObject()
     {
-        reproductionRate = 3;
+        reproductionRate = 90;
         width = 16;
         height = 12;
         texture = textures["goldFish"].texture;
@@ -175,7 +180,7 @@ class aggressiveFish : public swimmingObject
 public:
     aggressiveFish() : swimmingObject()
     {
-        reproductionRate = 0.0001;
+        reproductionRate = 5;
         randomnessX = 1;
         randomnessY = 1;
         width = 200;
@@ -191,7 +196,7 @@ class crazyFish : public swimmingObject
 public:
     crazyFish() : swimmingObject()
     {
-        reproductionRate = 1;
+        reproductionRate = 20;
         randomnessX = 5;
         randomnessY = 10;
         width = 54;
@@ -207,7 +212,7 @@ class dumbFish : public swimmingObject
 public:
     dumbFish() : swimmingObject()
     {
-        reproductionRate = 3;
+        reproductionRate = 50;
         width = 54;
         height = 23;
         texture = textures["dumbFish"].texture;
@@ -221,7 +226,7 @@ class disgustingFish : public swimmingObject
 public:
     disgustingFish() : swimmingObject()
     {
-        reproductionRate = 0.0001;
+        reproductionRate = 10;
         width = 54;
         height = 23;
         texture = textures["disgustingFish"].texture;
@@ -230,9 +235,10 @@ public:
     }
 };
 
-void spawn(int num, std::vector<swimmingObject>& spawnGroup, std::string name)
+void spawn(int num, std::vector<swimmingObject> &spawnGroup, std::string name)
 {
-    if (totalFish < MAX_FISH) {
+    if (totalFish < MAX_FISH)
+    {
         for (int i = 0; i < num; ++i)
         {
             if (name == "basicFish")
@@ -268,59 +274,83 @@ void spawn(int num, std::vector<swimmingObject>& spawnGroup, std::string name)
     }
 }
 
+bool checkCollision(const swimmingObject &a, const swimmingObject &b)
+{
 
-bool checkCollision(const swimmingObject& a, const swimmingObject& b) {
-    int leftA = a.posX;
-    int rightA = a.posX + a.width;
-    int topA = a.posY;
-    int bottomA = a.posY + a.height;
+    // Calculate centers
+    double centerX_A = a.posX + a.width / 2.0;
+    double centerY_A = a.posY + a.height / 2.0;
 
-    int leftB = b.posX;
-    int rightB = b.posX + b.width;
-    int topB = b.posY;
-    int bottomB = b.posY + b.height;
+    double centerX_B = b.posX + b.width / 2.0;
+    double centerY_B = b.posY + b.height / 2.0;
 
-    if (bottomA <= topB) {
-        return false;
-    }
+    // Calculate the distance between the centers
+    double distance = std::sqrt(std::pow(centerX_A - centerX_B, 2) + std::pow(centerY_A - centerY_B, 2));
 
-    if (topA >= bottomB) {
-        return false;
-    }
+    // Check if the distance is within the threshold
+    return distance <= 10;
+    // int leftA = a.posX;
+    // int rightA = a.posX + a.width;
+    // int topA = a.posY;
+    // int bottomA = a.posY + a.height;
 
-    if (rightA <= leftB) {
-        return false;
-    }
+    // int leftB = b.posX;
+    // int rightB = b.posX + b.width;
+    // int topB = b.posY;
+    // int bottomB = b.posY + b.height;
 
-    if (leftA >= rightB) {
-        return false;
-    }
+    // if (bottomA <= topB)
+    // {
+    //     return false;
+    // }
 
-    return true;
+    // if (topA >= bottomB)
+    // {
+    //     return false;
+    // }
+
+    // if (rightA <= leftB)
+    // {
+    //     return false;
+    // }
+
+    // if (leftA >= rightB)
+    // {
+    //     return false;
+    // }
+
+    // return true;
 }
 
-bool init() {
+bool init()
+{
     bool success = true;
 
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    if (SDL_Init(SDL_INIT_VIDEO) < 0)
+    {
         printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
         success = false;
     }
-    else {
+    else
+    {
         gWindow = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
-        if (gWindow == NULL) {
+        if (gWindow == NULL)
+        {
             printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
             success = false;
         }
-        else {
+        else
+        {
             gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
-            if (gRenderer == NULL) {
+            if (gRenderer == NULL)
+            {
                 printf("Renderer could not be created! SDL_Error: %s\n", SDL_GetError());
                 success = false;
             }
-            else {
+            else
+            {
                 SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
-                std::srand(static_cast<unsigned int>(std::time(0))); 
+                std::srand(static_cast<unsigned int>(std::time(0)));
             }
         }
     }
@@ -328,18 +358,22 @@ bool init() {
     return success;
 }
 
-bool loadSpecificMedia(const char* path, SDL_Texture** specificTexture) {
+bool loadSpecificMedia(const char *path, SDL_Texture **specificTexture)
+{
     bool success = true;
-    SDL_Surface* loadedSurface = SDL_LoadBMP(path);
-    if (loadedSurface == NULL) {
+    SDL_Surface *loadedSurface = SDL_LoadBMP(path);
+    if (loadedSurface == NULL)
+    {
         printf("Unable to load image %s! SDL Error: %s\n", path, SDL_GetError());
         success = false;
     }
-    else {
+    else
+    {
         SDL_SetColorKey(loadedSurface, SDL_TRUE, SDL_MapRGB(loadedSurface->format, 255, 255, 255));
         *specificTexture = SDL_CreateTextureFromSurface(gRenderer, loadedSurface);
         SDL_FreeSurface(loadedSurface);
-        if (*specificTexture == NULL) {
+        if (*specificTexture == NULL)
+        {
             printf("Unable to create texture from %s! SDL Error: %s\n", path, SDL_GetError());
             success = false;
         }
@@ -347,33 +381,30 @@ bool loadSpecificMedia(const char* path, SDL_Texture** specificTexture) {
     return success;
 }
 
-
-bool loadMedia() {
+bool loadMedia()
+{
     bool success = true;
 
-    for (auto& pair : textures) {
-        const char* path = pair.second.path.c_str();
-        if (!loadSpecificMedia(path, &pair.second.texture)) {
+    for (auto &pair : textures)
+    {
+        const char *path = pair.second.path.c_str();
+        if (!loadSpecificMedia(path, &pair.second.texture))
+        {
             success = false;
         }
     }
     return success;
 }
 
-void close() {
-    for (auto& pair : textures) {
+void close()
+{
+    for (auto &pair : textures)
+    {
         SDL_DestroyTexture(pair.second.texture);
         pair.second.texture = NULL;
     }
-    textures.clear(); 
-  /*  SDL_DestroyTexture(gWater);
-    gWater = NULL;
-    SDL_DestroyTexture(gBasicFish);
-    gBasicFish = NULL;
-    SDL_DestroyTexture(gSwimmingObject);
-    gSwimmingObject = NULL;
-    SDL_DestroyTexture(gGoldFish);
-    gGoldFish = NULL;*/
+    textures.clear();
+
     SDL_DestroyRenderer(gRenderer);
     gRenderer = NULL;
     SDL_DestroyWindow(gWindow);
@@ -381,41 +412,51 @@ void close() {
     SDL_Quit();
 }
 
-int main(int argc, char* args[]) {
-    if (!init()) {
+int main(int argc, char *args[])
+{
+    if (!init())
+    {
         printf("Failed to initialize!\n");
     }
-    else {
-        if (!loadMedia()) {
+    else
+    {
+        if (!loadMedia())
+        {
             printf("Failed to load media!\n");
         }
-        else {
+        else
+        {
             std::vector<swimmingObject> spawnGroup;
-            spawn(15, spawnGroup, "basicFish");
+            spawn(10, spawnGroup, "basicFish");
             spawn(10, spawnGroup, "goldFish");
-            spawn(5, spawnGroup, "crazyFish");
-            spawn(5, spawnGroup, "dumbFish");
-            spawn(1, spawnGroup, "aggressiveFish");
-            spawn(2, spawnGroup, "disgustingFish");
+            spawn(10, spawnGroup, "crazyFish");
+            spawn(6, spawnGroup, "dumbFish");
+            spawn(2, spawnGroup, "aggressiveFish");
+            spawn(3, spawnGroup, "disgustingFish");
 
             bool quit = false;
             SDL_Event e;
 
-            while (!quit) {
-                while (SDL_PollEvent(&e) != 0) {
-                    if (e.type == SDL_QUIT) {
+            while (!quit)
+            {
+                while (SDL_PollEvent(&e) != 0)
+                {
+                    if (e.type == SDL_QUIT)
+                    {
                         quit = true;
                     }
                 }
 
-                for (auto& obj : spawnGroup) {
+                for (auto &obj : spawnGroup)
+                {
                     obj.updatePosition(spawnGroup);
                 }
 
                 SDL_RenderClear(gRenderer);
                 SDL_RenderCopy(gRenderer, textures["water"].texture, NULL, NULL);
 
-                for (const auto& fish : spawnGroup) {
+                for (const auto &fish : spawnGroup)
+                {
                     fish.render();
                 }
 
