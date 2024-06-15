@@ -12,20 +12,23 @@ const int SCREEN_HEIGHT = 800;
 
 // max num of fish that can be inside the akwaos
 const int MAX_FISH = 100;
-// num of fish that ARE inside the akwaos
-int totalFish;
 
-const std::string PATH = "textures\\";
+// here define how many fish of different species to spawn
+const std::vector<std::pair<int, std::string>> spawn_requests = {
+    {4, "basicFish"},
+    {6, "goldFish"},
+    {2, "crazyFish"},
+    {2, "dumbFish"},
+    {2, "aggressiveFish"},
+    {2, "disgustingFish"},
+    {3, "goldfishEater"}};
 
-bool init();
-bool loadMedia();
-void close();
-void spawnObjects(int num, std::vector<class swimmingObject> &swimmingObjects);
-bool checkCollision(const swimmingObject &a, const swimmingObject &b);
-void reproduce(const swimmingObject &parent, std::vector<swimmingObject> &newFish);
 void spawn(int num, std::vector<swimmingObject> &spawnGroup, std::string name);
 SDL_Window *gWindow = NULL;
 SDL_Renderer *gRenderer = NULL;
+std::vector<swimmingObject> spawnGroup;
+
+int totalFish;
 
 struct Texture
 {
@@ -34,15 +37,15 @@ struct Texture
 };
 
 std::map<std::string, Texture> textures = {
-    {"water", {nullptr, PATH + "water.bmp"}},
-    {"swimmingObject", {nullptr, PATH + "swimmingObject.bmp"}},
-    {"basicFish", {nullptr, PATH + "basicFish.bmp"}},
-    {"goldFish", {nullptr, PATH + "goldFish.bmp"}},
-    {"crazyFish", {nullptr, PATH + "crazyFish.bmp"}},
-    {"dumbFish", {nullptr, PATH + "dumbFish.bmp"}},
-    {"aggressiveFish", {nullptr, PATH + "aggressiveFish.bmp"}},
-    {"goldfishEater", {nullptr, PATH + "goldfishEater.bmp"}},
-    {"disgustingFish", {nullptr, PATH + "disgustingFish.bmp"}}};
+    {"water", {nullptr, "textures\\water.bmp"}},
+    {"swimmingObject", {nullptr, "textures\\swimmingObject.bmp"}},
+    {"basicFish", {nullptr, "textures\\basicFish.bmp"}},
+    {"goldFish", {nullptr, "textures\\goldFish.bmp"}},
+    {"crazyFish", {nullptr, "textures\\crazyFish.bmp"}},
+    {"dumbFish", {nullptr, "textures\\dumbFish.bmp"}},
+    {"aggressiveFish", {nullptr, "textures\\aggressiveFish.bmp"}},
+    {"goldfishEater", {nullptr, "textures\\goldfishEater.bmp"}},
+    {"disgustingFish", {nullptr, "textures\\disgustingFish.bmp"}}};
 
 class swimmingObject
 {
@@ -76,25 +79,29 @@ public:
         posY = std::rand() % (SCREEN_HEIGHT - height);
     }
 
-    bool isTouching(const swimmingObject &other) const
+    int getDistance(const swimmingObject &other) const
     {
         double centerX_A = posX + width / 2.0;
         double centerY_A = posY + height / 2.0;
         double centerX_B = other.posX + other.width / 2.0;
         double centerY_B = other.posY + other.height / 2.0;
         double distance = std::sqrt(std::pow(centerX_A - centerX_B, 2) + std::pow(centerY_A - centerY_B, 2));
-        return distance <= 10;
+        return distance;
     }
 
     bool canEat(const swimmingObject &other) const
     {
         // aggressive fish eat fish that are smaller and edible
-        return isAggressive && (height * width) > (other.height * other.width) && other.isEdible;
+        return isAggressive && (height * width) > (other.height * other.width) && other.isEdible && getDistance(other) < 10;
+    }
+    bool canBePotentiallyEatenBy(const swimmingObject &other) const
+    {
+        return other.isAggressive && (other.height * other.width) > (height * width) && isEdible;
     }
 
     bool canReproduce(const swimmingObject &other) const
     {
-        return (name == other.name && (std::rand() % 100) < reproductionRate);
+        return (name == other.name && getDistance(other) < 10 && (std::rand() % 100) < reproductionRate);
     }
 
     void updatePosition(std::vector<swimmingObject> &swimmingObjects)
@@ -136,7 +143,7 @@ public:
 
         for (size_t i = 0; i < swimmingObjects.size(); ++i)
         {
-            if (&swimmingObjects[i] != this && isTouching(swimmingObjects[i]))
+            if (&swimmingObjects[i] != this)
             {
                 if (canReproduce(swimmingObjects[i]))
                 {
@@ -396,6 +403,14 @@ void close()
     SDL_Quit();
 }
 
+void spawnAll()
+{
+    for (const auto &request : spawn_requests)
+    {
+        spawn(request.first, spawnGroup, request.second);
+    }
+}
+
 int main(int argc, char *args[])
 {
     if (!init())
@@ -410,15 +425,8 @@ int main(int argc, char *args[])
         }
         else
         {
-            std::vector<swimmingObject> spawnGroup;
-            spawn(4, spawnGroup, "basicFish");
-            spawn(6, spawnGroup, "goldFish");
-            spawn(2, spawnGroup, "crazyFish");
-            spawn(2, spawnGroup, "dumbFish");
-            spawn(2, spawnGroup, "aggressiveFish");
-            spawn(2, spawnGroup, "disgustingFish");
-            spawn(3, spawnGroup, "goldfishEater");
 
+            spawnAll();
             bool quit = false;
             SDL_Event e;
 
@@ -429,6 +437,15 @@ int main(int argc, char *args[])
                     if (e.type == SDL_QUIT)
                     {
                         quit = true;
+                    }
+                    else if (e.type == SDL_KEYDOWN)
+                    {
+                        if (e.key.keysym.sym == SDLK_r)
+                        {
+                            spawnGroup.clear();
+                            totalFish = 0;
+                            spawnAll();
+                        }
                     }
                 }
 
