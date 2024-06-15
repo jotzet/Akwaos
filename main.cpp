@@ -41,6 +41,7 @@ std::map<std::string, Texture> textures = {
     {"crazyFish", {nullptr, PATH + "crazyFish.bmp"}},
     {"dumbFish", {nullptr, PATH + "dumbFish.bmp"}},
     {"aggressiveFish", {nullptr, PATH + "aggressiveFish.bmp"}},
+    {"goldfishEater", {nullptr, PATH + "goldfishEater.bmp"}},
     {"disgustingFish", {nullptr, PATH + "disgustingFish.bmp"}}};
 
 class swimmingObject
@@ -53,6 +54,8 @@ public:
     int speed;
     int randomnessX;
     int randomnessY;
+    bool isAggressive;
+    bool isEdible;
     double reproductionRate;
     SDL_Texture *texture;
 
@@ -64,34 +67,34 @@ public:
           speed(1),
           randomnessX(1),
           randomnessY(1),
-          reproductionRate(1),
-          name("swimmingObject"),
-          texture(textures["swimmingObject"].texture)
+          reproductionRate(10),
+          isEdible(true),
+          isAggressive(false)
+
     {
         posX = std::rand() % (SCREEN_WIDTH - width);
         posY = std::rand() % (SCREEN_HEIGHT - height);
     }
 
-    swimmingObject(int x, int y, int velX, int velY, int w, int h, int s, SDL_Texture *tex)
-        : posX(x), posY(y), velocityX(velX), velocityY(velY),
-          width(w), height(h), speed(s), texture(tex)
+    bool isTouching(const swimmingObject &other) const
     {
-    }
-
-    bool checkCollision(const swimmingObject &other) const
-    {
-        // Calculate centers
         double centerX_A = posX + width / 2.0;
         double centerY_A = posY + height / 2.0;
-
         double centerX_B = other.posX + other.width / 2.0;
         double centerY_B = other.posY + other.height / 2.0;
-
-        // Calculate the distance between the centers
         double distance = std::sqrt(std::pow(centerX_A - centerX_B, 2) + std::pow(centerY_A - centerY_B, 2));
-
-        // Check if the distance is within the threshold
         return distance <= 10;
+    }
+
+    bool canEat(const swimmingObject &other) const
+    {
+        // aggressive fish eat fish that are smaller and edible
+        return isAggressive && (height * width) > (other.height * other.width) && other.isEdible;
+    }
+
+    bool canReproduce(const swimmingObject &other) const
+    {
+        return (name == other.name && (std::rand() % 100) < reproductionRate);
     }
 
     void updatePosition(std::vector<swimmingObject> &swimmingObjects)
@@ -131,27 +134,19 @@ public:
             posY = SCREEN_HEIGHT - height;
         }
 
-        // Colision w/ other objects
         for (size_t i = 0; i < swimmingObjects.size(); ++i)
         {
-            if (&swimmingObjects[i] != this && checkCollision(swimmingObjects[i]))
+            if (&swimmingObjects[i] != this && isTouching(swimmingObjects[i]))
             {
-
-                // upon meeting fish of the same species, they have a chance to reproduce
-                if (name == swimmingObjects[i].name && (std::rand() % 100) < reproductionRate)
+                if (canReproduce(swimmingObjects[i]))
                 {
                     spawn(1, swimmingObjects, name);
                 }
 
-                // upon meeting aggressiveFish it can eat other fish
-                else if (name == "aggressiveFish" && swimmingObjects[i].name != "aggressiveFish")
+                else if (canEat(swimmingObjects[i]))
                 {
-                    // nobody wants to eat disgustingFish
-                    if (swimmingObjects[i].name != "disgustingFish")
-                    {
-                        swimmingObjects.erase(swimmingObjects.begin() + i);
-                        totalFish--;
-                    }
+                    swimmingObjects.erase(swimmingObjects.begin() + i);
+                    totalFish--;
                 }
             }
         }
@@ -170,9 +165,7 @@ class basicFish : public swimmingObject
 public:
     basicFish() : swimmingObject()
     {
-        reproductionRate = 20;
         texture = textures["basicFish"].texture;
-        speed = 2;
         name = "basicFish";
     }
 };
@@ -182,7 +175,7 @@ class goldFish : public swimmingObject
 public:
     goldFish() : swimmingObject()
     {
-        reproductionRate = 90;
+        reproductionRate = 50;
         width = 16;
         height = 12;
         texture = textures["goldFish"].texture;
@@ -204,6 +197,7 @@ public:
         texture = textures["aggressiveFish"].texture;
         speed = 1;
         name = "aggressiveFish";
+        isAggressive = true;
     }
 };
 
@@ -223,12 +217,31 @@ public:
     }
 };
 
+class goldfishEater : public swimmingObject
+{
+public:
+    goldfishEater() : swimmingObject()
+    {
+        reproductionRate = 5;
+        randomnessX = 2;
+        randomnessY = 2;
+        width = 33;
+        height = 12;
+        texture = textures["goldfishEater"].texture;
+        speed = 4;
+        name = "goldfishEater";
+        isAggressive = true;
+    }
+};
+
 class dumbFish : public swimmingObject
 {
 public:
     dumbFish() : swimmingObject()
     {
         reproductionRate = 50;
+        randomnessX = 2;
+        randomnessY = 2;
         width = 54;
         height = 23;
         texture = textures["dumbFish"].texture;
@@ -242,12 +255,11 @@ class disgustingFish : public swimmingObject
 public:
     disgustingFish() : swimmingObject()
     {
-        reproductionRate = 10;
         width = 54;
         height = 23;
         texture = textures["disgustingFish"].texture;
-        speed = 1;
         name = "disgustingFish";
+        isEdible = false;
     }
 };
 
@@ -281,6 +293,10 @@ void spawn(int num, std::vector<swimmingObject> &spawnGroup, std::string name)
             {
                 spawnGroup.push_back(disgustingFish());
             }
+            else if (name == "goldfishEater")
+            {
+                spawnGroup.push_back(goldfishEater());
+            }
             else
             {
                 spawnGroup.push_back(swimmingObject());
@@ -289,22 +305,6 @@ void spawn(int num, std::vector<swimmingObject> &spawnGroup, std::string name)
         }
     }
 }
-
-// bool checkCollision(const swimmingObject &a, const swimmingObject &b)
-// {
-
-//     double centerX_A = a.posX + a.width / 2.0;
-//     double centerY_A = a.posY + a.height / 2.0;
-//     double centerX_B = b.posX + b.width / 2.0;
-//     double centerY_B = b.posY + b.height / 2.0;
-
-//     // Calculate the distance between the centers
-//     double distance = std::sqrt(std::pow(centerX_A - centerX_B, 2) + std::pow(centerY_A - centerY_B, 2));
-
-//     // Check if the distance is within the threshold
-//     return distance <= 10;
-
-// }
 
 bool init()
 {
@@ -317,7 +317,7 @@ bool init()
     }
     else
     {
-        gWindow = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+        gWindow = SDL_CreateWindow("AKWAOS", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
         if (gWindow == NULL)
         {
             printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
@@ -411,12 +411,13 @@ int main(int argc, char *args[])
         else
         {
             std::vector<swimmingObject> spawnGroup;
-            spawn(10, spawnGroup, "basicFish");
-            spawn(10, spawnGroup, "goldFish");
-            spawn(10, spawnGroup, "crazyFish");
-            spawn(6, spawnGroup, "dumbFish");
+            spawn(4, spawnGroup, "basicFish");
+            spawn(6, spawnGroup, "goldFish");
+            spawn(2, spawnGroup, "crazyFish");
+            spawn(2, spawnGroup, "dumbFish");
             spawn(2, spawnGroup, "aggressiveFish");
-            spawn(3, spawnGroup, "disgustingFish");
+            spawn(2, spawnGroup, "disgustingFish");
+            spawn(3, spawnGroup, "goldfishEater");
 
             bool quit = false;
             SDL_Event e;
