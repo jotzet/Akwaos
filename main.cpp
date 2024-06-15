@@ -5,7 +5,7 @@
 #include <vector>
 #include <ctime>
 #include <cstdlib>
-#include <cmath> 
+#include <cmath>
 
 const int SCREEN_WIDTH = 1300;
 const int SCREEN_HEIGHT = 800;
@@ -78,6 +78,22 @@ public:
     {
     }
 
+    bool checkCollision(const swimmingObject &other) const
+    {
+        // Calculate centers
+        double centerX_A = posX + width / 2.0;
+        double centerY_A = posY + height / 2.0;
+
+        double centerX_B = other.posX + other.width / 2.0;
+        double centerY_B = other.posY + other.height / 2.0;
+
+        // Calculate the distance between the centers
+        double distance = std::sqrt(std::pow(centerX_A - centerX_B, 2) + std::pow(centerY_A - centerY_B, 2));
+
+        // Check if the distance is within the threshold
+        return distance <= 10;
+    }
+
     void updatePosition(std::vector<swimmingObject> &swimmingObjects)
     {
         posX += velocityX * speed;
@@ -118,7 +134,7 @@ public:
         // Colision w/ other objects
         for (size_t i = 0; i < swimmingObjects.size(); ++i)
         {
-            if (&swimmingObjects[i] != this && checkCollision(*this, swimmingObjects[i]))
+            if (&swimmingObjects[i] != this && checkCollision(swimmingObjects[i]))
             {
 
                 // upon meeting fish of the same species, they have a chance to reproduce
@@ -274,53 +290,21 @@ void spawn(int num, std::vector<swimmingObject> &spawnGroup, std::string name)
     }
 }
 
-bool checkCollision(const swimmingObject &a, const swimmingObject &b)
-{
+// bool checkCollision(const swimmingObject &a, const swimmingObject &b)
+// {
 
-    // Calculate centers
-    double centerX_A = a.posX + a.width / 2.0;
-    double centerY_A = a.posY + a.height / 2.0;
+//     double centerX_A = a.posX + a.width / 2.0;
+//     double centerY_A = a.posY + a.height / 2.0;
+//     double centerX_B = b.posX + b.width / 2.0;
+//     double centerY_B = b.posY + b.height / 2.0;
 
-    double centerX_B = b.posX + b.width / 2.0;
-    double centerY_B = b.posY + b.height / 2.0;
+//     // Calculate the distance between the centers
+//     double distance = std::sqrt(std::pow(centerX_A - centerX_B, 2) + std::pow(centerY_A - centerY_B, 2));
 
-    // Calculate the distance between the centers
-    double distance = std::sqrt(std::pow(centerX_A - centerX_B, 2) + std::pow(centerY_A - centerY_B, 2));
+//     // Check if the distance is within the threshold
+//     return distance <= 10;
 
-    // Check if the distance is within the threshold
-    return distance <= 10;
-    // int leftA = a.posX;
-    // int rightA = a.posX + a.width;
-    // int topA = a.posY;
-    // int bottomA = a.posY + a.height;
-
-    // int leftB = b.posX;
-    // int rightB = b.posX + b.width;
-    // int topB = b.posY;
-    // int bottomB = b.posY + b.height;
-
-    // if (bottomA <= topB)
-    // {
-    //     return false;
-    // }
-
-    // if (topA >= bottomB)
-    // {
-    //     return false;
-    // }
-
-    // if (rightA <= leftB)
-    // {
-    //     return false;
-    // }
-
-    // if (leftA >= rightB)
-    // {
-    //     return false;
-    // }
-
-    // return true;
-}
+// }
 
 bool init()
 {
