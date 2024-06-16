@@ -85,7 +85,7 @@ Reproduction: Cannot reproduce. <br>
 Special trait: Can heal and unfreeze other fish. <br>
 
 **11. Psycho Fish** <br>
-![image](https://github.com/jotzet/Akwaos/assets/91730870/670efd6e-159d-420c-89b9-e565b7d08e33) <br>
+![image](https://github.com/jotzet/Akwaos/assets/91730870/35eb45ff-c8af-41a3-ac82-8457311aabae)<br>
 Characteristics: Unpredictable. <br>
 Reproduction: Unpredictable. <br>
 Special trait: Get spawned with random behaviour. <br>
