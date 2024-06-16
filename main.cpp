@@ -11,12 +11,12 @@ const int SCREEN_WIDTH = 1200;
 const int SCREEN_HEIGHT = 1000;
 
 // max num of fish that can be inside the akwaos
-const int MAX_FISH = 100;
+const int MAX_FISH = 150;
 
 // here define how many fish of different species to spawn
 const std::vector<std::pair<int, std::string>> spawn_requests = {
-    {4, "basicFish"},
-    {4, "goldFish"},
+    {10, "basicFish"},
+    {10, "goldFish"},
     {3, "crazyFish"},
     {3, "dumbFish"},
     {2, "aggressiveFish"},
@@ -24,7 +24,8 @@ const std::vector<std::pair<int, std::string>> spawn_requests = {
     {3, "canibalFish"},
     {1, "zombieFish"},
     {1, "freezingFish"},
-    {1, "healingFish"},
+    {2, "healingFish"},
+    {2, "psychoFish"},
     {3, "goldfishEater"}};
 
 // void spawnObjects(int num, std::vector<class swimmingObject> &swimmingObjects);
@@ -53,6 +54,7 @@ std::map<std::string, Texture> textures = {
     {"goldfishEater", {nullptr, "textures\\goldfishEater.bmp"}},
     {"zombieFish", {nullptr, "textures\\zombieFish.bmp"}},
     {"freezingFish", {nullptr, "textures\\freezingFish.bmp"}},
+    {"psychoFish", {nullptr, "textures\\psychoFish.bmp"}},
     {"healingFish", {nullptr, "textures\\healingFish.bmp"}},
     {"disgustingFish", {nullptr, "textures\\disgustingFish.bmp"}}};
 
@@ -125,7 +127,7 @@ public:
 
     bool isNotSpecial(const swimmingObject &other) const
     {
-        return !isHealing && !isTurningZombie && !isFreezing;
+        return (!other.isHealing && !other.isTurningZombie && !other.isFreezing);
     }
 
     bool canEat(const swimmingObject &other) const
@@ -152,12 +154,12 @@ public:
     }
     bool canFreeze(const swimmingObject &other) const
     {
-        return isFreezing && isNotSpecial(other) && getDistance(other) < 15;
+        return isFreezing && isNotSpecial(other) && getDistance(other) < 30 && (std::rand() % 100) < 50;
     }
 
     bool canTurnZombie(const swimmingObject &other) const
     {
-        return isTurningZombie && isNotSpecial(other) && getDistance(other) < 15;
+        return isTurningZombie && isNotSpecial(other) && getDistance(other) < 15 && (std::rand() % 100) < 50;
     }
 
     void eat(swimmingObject &other)
@@ -314,8 +316,6 @@ public:
     freezingFish(int iniX, int iniY) : swimmingObject(iniX, iniY)
     {
         reproductionRate = 0;
-        randomnessX = 5;
-        randomnessY = 5;
         width = 54;
         height = 23;
         texture = textures["freezingFish"].texture;
@@ -341,6 +341,7 @@ public:
         isCanibal = true;
     }
 };
+
 class healingFish : public swimmingObject
 {
 public:
@@ -356,6 +357,7 @@ public:
         isHealing = true;
     }
 };
+
 class goldFish : public swimmingObject
 {
 public:
@@ -465,6 +467,25 @@ public:
     }
 };
 
+class psychoFish : public swimmingObject
+{
+public:
+    psychoFish(int iniX, int iniY) : swimmingObject(iniX, iniY)
+    {
+
+        width = 62;
+        height = 29;
+        reproductionRate = (std::rand() % 10) + 1;
+        texture = textures["psychoFish"].texture;
+        name = "psychoFish";
+        isEdible = std::rand() % 2;
+        isAggressive = std::rand() % 2;
+        speed = (std::rand() % 5) + 1;
+        randomnessX = (std::rand() % 10) + 1;
+        randomnessY = (std::rand() % 10) + 1;
+    }
+};
+
 void spawn(int num, std::string name, int posX, int posY)
 {
 
@@ -507,6 +528,10 @@ void spawn(int num, std::string name, int posX, int posY)
             else if (name == "canibalFish")
             {
                 spawnGroup.push_back(canibalFish(posX, posY));
+            }
+            else if (name == "psychoFish")
+            {
+                spawnGroup.push_back(psychoFish(posX, posY));
             }
             else if (name == "disgustingFish")
             {
