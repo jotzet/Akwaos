@@ -72,9 +72,7 @@ Reproduction: Cannot reproduce. <br>
 Special trait: Turn other fish into zombies. They change their colors to green, they can't reproduce and they are now aggressive canibals and can eat even slightly bigger fish. <br>
 
 **9. Freezing Fish** <br>
-![image](https://github.com/jotzet/Akwaos/assets/91730870/ea9ec8d2-d3db-4c08-8e76-8f4568f7ae2f)
-
- <br>
+![image](https://github.com/jotzet/Akwaos/assets/91730870/ea9ec8d2-d3db-4c08-8e76-8f4568f7ae2f)<br>
 Characteristics: Slow, unedible. <br>
 Reproduction: Cannot reproduce. <br>
 Special trait: Freeze other fish - they can't move (they change color to blue) <br>
