@@ -59,25 +59,27 @@ Characteristics: Large, aggressive, and slow. <br>
 Reproduction: Extremely slow. <br>
 
 **7. Canibal Fish** <br>
-LINK <br>
+![image](https://github.com/jotzet/Akwaos/assets/91730870/0d4d5cfc-d7d6-4795-9dbd-c939d26b2f71) <br>
 Characteristics: Quite fast and aggressive. <br>
 Reproduction: Fast. <br>
 Special trait: When meeting fish of the same species, they can reproduce or consume them (or both). <br>
 
 **8. Zombie Fish** <br>
-LINK <br>
+![image](https://github.com/jotzet/Akwaos/assets/91730870/e4a30bc8-3e38-4bff-a316-528a67b4619b)
+ <br>
 Characteristics: Slow, unedible. <br>
 Reproduction: Cannot reproduce. <br>
 Special trait: Turn other fish into zombies. They change their colors to green, they can't reproduce and they are now aggressive canibals and can eat even slightly bigger fish. <br>
 
 **9. Freezing Fish** <br>
-LINK <br>
+![image](https://github.com/jotzet/Akwaos/assets/91730870/ea9ec8d2-d3db-4c08-8e76-8f4568f7ae2f)<br>
 Characteristics: Slow, unedible. <br>
 Reproduction: Cannot reproduce. <br>
 Special trait: Freeze other fish - they can't move (they change color to blue) <br>
 
 **10. Healing Fish** <br>
-LINK <br>
+![image](https://github.com/jotzet/Akwaos/assets/91730870/d2f6d52a-0310-402b-a5fb-d19860e91933)
+ <br>
 Characteristics: Fast, unedible <br>
 Reproduction: Cannot reproduce. <br>
 Special trait: Can heal and unfreeze other fish. <br>
