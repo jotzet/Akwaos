@@ -83,3 +83,9 @@ Special trait: Freeze other fish - they can't move (they change color to blue) <
 Characteristics: Fast, unedible <br>
 Reproduction: Cannot reproduce. <br>
 Special trait: Can heal and unfreeze other fish. <br>
+
+**11. Psycho Fish** <br>
+![image](https://github.com/jotzet/Akwaos/assets/91730870/670efd6e-159d-420c-89b9-e565b7d08e33) <br>
+Characteristics: Unpredictable. <br>
+Reproduction: Unpredictable. <br>
+Special trait: Get spawned with random behaviour. <br>
