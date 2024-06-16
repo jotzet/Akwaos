@@ -1,11 +1,20 @@
 # Akwaos - Aquatic Ecosystem Simulator
 
 This project is a simple game inspired by John Conway's Game of Life. It simulates an aquatic ecosystem where various types of fish interact. Players can introduce different fish species into the environment and observe how they influence the ecosystem.
-The name Akwaos combines "akwa-" a Polish prefix meaning water-related, with "chaos" highlighting the unpredictable nature of such systems.
+<br>
+The name "Akwaos" combines the Polish prefix "akwa-" meaning water-related, with "chaos" to highlight the unpredictable nature of the system.
+
+# Running the simulation
+
+To start the simulation, run the executable file (`AKWAOS.exe`) provided.
+
+## Modifying the simulation
+If you wish to make changes to the simulation, such as adjusting the number of fish or the size of the ecosystem, you can do so by editing the `main.cpp` file. The relevant functions are located at the top of the file and are commented. After making your changes, compile the program by running the make command in the game directory. This will generate a new executable file, which you can then run to start the updated simulation.
+
+## Resetting the simulation
+To reset the simulation at any time, press the "R" key on your keyboard. 
 
 # Fish Species
-
-
 
  **0. Basic Fish**<br> 
   ![image](https://github.com/jotzet/Akwaos/assets/91730870/f10290a9-4da8-41cf-883a-14daa09ec106) <br> 
@@ -48,9 +57,4 @@ The name Akwaos combines "akwa-" a Polish prefix meaning water-related, with "ch
   Characteristics: Large, aggressive, and slow. <br>
   Reproduction: Slow. <br>
   Behavior: Consumes other fish. <br>
-  
-# Running
 
-Run the exe file.
-If you want to make any changes in the game you can edit the code and then run `make` command in the game directory.
-This will generate a new executable file. Run the executable to start the game.
