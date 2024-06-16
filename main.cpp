@@ -7,8 +7,8 @@
 #include <cstdlib>
 #include <cmath>
 
-const int SCREEN_WIDTH = 1300;
-const int SCREEN_HEIGHT = 800;
+const int SCREEN_WIDTH = 1200;
+const int SCREEN_HEIGHT = 1000;
 
 // max num of fish that can be inside the akwaos
 const int MAX_FISH = 100;
@@ -16,17 +16,22 @@ const int MAX_FISH = 100;
 // here define how many fish of different species to spawn
 const std::vector<std::pair<int, std::string>> spawn_requests = {
     {4, "basicFish"},
-    {6, "goldFish"},
-    {2, "crazyFish"},
-    {2, "dumbFish"},
+    {4, "goldFish"},
+    {3, "crazyFish"},
+    {3, "dumbFish"},
     {2, "aggressiveFish"},
-    {2, "disgustingFish"},
+    {3, "disgustingFish"},
+    {3, "canibalFish"},
+    {1, "zombieFish"},
+    {1, "freezingFish"},
+    {1, "healingFish"},
     {3, "goldfishEater"}};
 
-void spawn(int num, std::vector<swimmingObject> &spawnGroup, std::string name);
+// void spawnObjects(int num, std::vector<class swimmingObject> &swimmingObjects);
+void spawn(int num, std::string name, int posX, int posY);
 SDL_Window *gWindow = NULL;
 SDL_Renderer *gRenderer = NULL;
-std::vector<swimmingObject> spawnGroup;
+std::vector<class swimmingObject> spawnGroup;
 
 int totalFish;
 
@@ -44,13 +49,18 @@ std::map<std::string, Texture> textures = {
     {"crazyFish", {nullptr, "textures\\crazyFish.bmp"}},
     {"dumbFish", {nullptr, "textures\\dumbFish.bmp"}},
     {"aggressiveFish", {nullptr, "textures\\aggressiveFish.bmp"}},
+    {"canibalFish", {nullptr, "textures\\canibalFish.bmp"}},
     {"goldfishEater", {nullptr, "textures\\goldfishEater.bmp"}},
+    {"zombieFish", {nullptr, "textures\\zombieFish.bmp"}},
+    {"freezingFish", {nullptr, "textures\\freezingFish.bmp"}},
+    {"healingFish", {nullptr, "textures\\healingFish.bmp"}},
     {"disgustingFish", {nullptr, "textures\\disgustingFish.bmp"}}};
 
 class swimmingObject
 {
 public:
     std::string name;
+    int spawnCooldown;
     int posX, posY;
     int velocityX, velocityY;
     int width, height;
@@ -59,24 +69,48 @@ public:
     int randomnessY;
     bool isAggressive;
     bool isEdible;
+    bool isCanibal;
+    bool isTurningZombie;
+    bool isFreezing;
+    bool isZombie;
+    bool isFrozen;
+    bool isHealing;
     double reproductionRate;
     SDL_Texture *texture;
 
-    swimmingObject()
-        : velocityX((std::rand() % 2) * 2 - 1),
+    swimmingObject(int iniX, int iniY)
+        : name("SwimmingObject"),
+          spawnCooldown(0),
+          posX(0),
+          posY(0),
+          velocityX((std::rand() % 2) * 2 - 1),
           velocityY((std::rand() % 2) * 2 - 1),
           width(34),
           height(14),
           speed(1),
           randomnessX(1),
           randomnessY(1),
-          reproductionRate(10),
+          isAggressive(false),
           isEdible(true),
-          isAggressive(false)
-
+          isCanibal(false),
+          isTurningZombie(false),
+          isFreezing(false),
+          isZombie(false),
+          isFrozen(false),
+          isHealing(false),
+          reproductionRate(10),
+          texture(nullptr)
     {
-        posX = std::rand() % (SCREEN_WIDTH - width);
-        posY = std::rand() % (SCREEN_HEIGHT - height);
+        if (iniX == 0 && iniY == 0)
+        {
+            posX = std::rand() % (SCREEN_WIDTH - width);
+            posY = std::rand() % (SCREEN_HEIGHT - height);
+        }
+        else
+        {
+            posX = iniX;
+            posY = iniY;
+        }
     }
 
     int getDistance(const swimmingObject &other) const
@@ -89,34 +123,82 @@ public:
         return distance;
     }
 
+    bool isNotSpecial(const swimmingObject &other) const
+    {
+        return !isHealing && !isTurningZombie && !isFreezing;
+    }
+
     bool canEat(const swimmingObject &other) const
     {
-        // aggressive fish eat fish that are smaller and edible
-        return isAggressive && (height * width) > (other.height * other.width) && other.isEdible && getDistance(other) < 10;
-    }
-    bool canBePotentiallyEatenBy(const swimmingObject &other) const
-    {
-        return other.isAggressive && (other.height * other.width) > (height * width) && isEdible;
+
+        if (isZombie)
+        {
+            return getDistance(other) < 10 && isNotSpecial(other) && (height * width) > ((other.height * other.width) - 100);
+        }
+        else
+        {
+            return !isFrozen && isNotSpecial(other) && isAggressive && ((isCanibal && other.isCanibal && (std::rand() % 100) < 50) || (height * width) > (other.height * other.width)) && other.isEdible && getDistance(other) < 10;
+        }
     }
 
     bool canReproduce(const swimmingObject &other) const
     {
-        return (name == other.name && getDistance(other) < 10 && (std::rand() % 100) < reproductionRate);
+        return (!isZombie && !isFrozen && spawnCooldown == 0 && name == other.name && getDistance(other) < 10 && (std::rand() % 100) < reproductionRate);
     }
 
-    void updatePosition(std::vector<swimmingObject> &swimmingObjects)
+    bool canHeal(const swimmingObject &other) const
     {
-        posX += velocityX * speed;
-        posY += velocityY * speed;
+        return isHealing && (other.isZombie || other.isFrozen) && getDistance(other) < 15;
+    }
+    bool canFreeze(const swimmingObject &other) const
+    {
+        return isFreezing && isNotSpecial(other) && getDistance(other) < 15;
+    }
 
-        // Random behaviour
-        if ((std::rand() % 100) < randomnessX)
+    bool canTurnZombie(const swimmingObject &other) const
+    {
+        return isTurningZombie && isNotSpecial(other) && getDistance(other) < 15;
+    }
+
+    void eat(swimmingObject &other)
+    {
+        auto it = spawnGroup.begin();
+        while (it != spawnGroup.end())
         {
-            velocityX = -velocityX;
+            if (&(*it) == &other)
+            {
+                it = spawnGroup.erase(it);
+                totalFish--;
+                break;
+            }
+            else
+            {
+                ++it;
+            }
         }
-        if ((std::rand() % 100) < randomnessY)
+    }
+
+    void updatePosition()
+    {
+        if (spawnCooldown > 0)
         {
-            velocityY = -velocityY;
+            spawnCooldown--;
+        }
+
+        if (!isFrozen)
+        {
+            posX += velocityX * speed;
+            posY += velocityY * speed;
+
+            // Random behaviour
+            if ((std::rand() % 100) < randomnessX)
+            {
+                velocityX = -velocityX;
+            }
+            if ((std::rand() % 100) < randomnessY)
+            {
+                velocityY = -velocityY;
+            }
         }
 
         // Collision w/ screen edges
@@ -141,19 +223,55 @@ public:
             posY = SCREEN_HEIGHT - height;
         }
 
-        for (size_t i = 0; i < swimmingObjects.size(); ++i)
+        for (size_t i = 0; i < spawnGroup.size(); ++i)
         {
-            if (&swimmingObjects[i] != this)
+            if (&spawnGroup[i] != this)
             {
-                if (canReproduce(swimmingObjects[i]))
+                if (canReproduce(spawnGroup[i]))
                 {
-                    spawn(1, swimmingObjects, name);
+
+                    int spawnX = posX - 2 * width;
+                    int spawnY = posY - 2 * height;
+
+                    if (spawnX < 0)
+                    {
+                        spawnX = 0;
+                    }
+                    else if (spawnX + width > SCREEN_WIDTH)
+                    {
+                        spawnX = SCREEN_WIDTH - width;
+                    }
+
+                    if (spawnY < 0)
+                    {
+                        spawnY = 0;
+                    }
+                    else if (spawnY + height > SCREEN_HEIGHT)
+                    {
+                        spawnY = SCREEN_HEIGHT - height;
+                    }
+
+                    spawn(1, name, spawnX, spawnY);
+                    spawnCooldown = 1000;
                 }
 
-                else if (canEat(swimmingObjects[i]))
+                else if (canEat(spawnGroup[i]))
                 {
-                    swimmingObjects.erase(swimmingObjects.begin() + i);
-                    totalFish--;
+
+                    eat(spawnGroup[i]);
+                }
+                else if (canFreeze(spawnGroup[i]))
+                {
+                    spawnGroup[i].isFrozen = true;
+                }
+                else if (canTurnZombie(spawnGroup[i]))
+                {
+                    spawnGroup[i].isZombie = true;
+                }
+                else if (canHeal(spawnGroup[i]))
+                {
+                    spawnGroup[i].isZombie = false;
+                    spawnGroup[i].isFrozen = false;
                 }
             }
         }
@@ -163,6 +281,19 @@ public:
     {
         SDL_Rect objectRect = {posX, posY, width, height};
         SDL_RendererFlip flip = (velocityX > 0) ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
+        if (isZombie && !isFrozen)
+        {
+            SDL_SetTextureColorMod(texture, 0, 255, 0);
+        }
+        else if (isFrozen)
+        {
+            SDL_SetTextureColorMod(texture, 102, 255, 255);
+        }
+        else
+        {
+            SDL_SetTextureColorMod(texture, 255, 255, 255);
+        }
+
         SDL_RenderCopyEx(gRenderer, texture, NULL, &objectRect, 0, NULL, flip);
     }
 };
@@ -170,17 +301,65 @@ public:
 class basicFish : public swimmingObject
 {
 public:
-    basicFish() : swimmingObject()
+    basicFish(int iniX, int iniY) : swimmingObject(iniX, iniY)
     {
         texture = textures["basicFish"].texture;
         name = "basicFish";
     }
 };
 
+class freezingFish : public swimmingObject
+{
+public:
+    freezingFish(int iniX, int iniY) : swimmingObject(iniX, iniY)
+    {
+        reproductionRate = 0;
+        randomnessX = 5;
+        randomnessY = 5;
+        width = 54;
+        height = 23;
+        texture = textures["freezingFish"].texture;
+        speed = 1;
+        name = "freezingFish";
+        isEdible = false;
+        isFreezing = true;
+    }
+};
+
+class canibalFish : public swimmingObject
+{
+public:
+    canibalFish(int iniX, int iniY) : swimmingObject(iniX, iniY)
+    {
+        texture = textures["canibalFish"].texture;
+        name = "canibalFish";
+        width = 54;
+        height = 23;
+        reproductionRate = 50;
+        isAggressive = true;
+        speed = 2;
+        isCanibal = true;
+    }
+};
+class healingFish : public swimmingObject
+{
+public:
+    healingFish(int iniX, int iniY) : swimmingObject(iniX, iniY)
+    {
+        texture = textures["healingFish"].texture;
+        name = "healingFish";
+        width = 91;
+        height = 31;
+        reproductionRate = 0;
+        speed = 2;
+        isEdible = false;
+        isHealing = true;
+    }
+};
 class goldFish : public swimmingObject
 {
 public:
-    goldFish() : swimmingObject()
+    goldFish(int iniX, int iniY) : swimmingObject(iniX, iniY)
     {
         reproductionRate = 50;
         width = 16;
@@ -194,9 +373,9 @@ public:
 class aggressiveFish : public swimmingObject
 {
 public:
-    aggressiveFish() : swimmingObject()
+    aggressiveFish(int iniX, int iniY) : swimmingObject(iniX, iniY)
     {
-        reproductionRate = 5;
+        reproductionRate = 1;
         randomnessX = 1;
         randomnessY = 1;
         width = 200;
@@ -211,7 +390,7 @@ public:
 class crazyFish : public swimmingObject
 {
 public:
-    crazyFish() : swimmingObject()
+    crazyFish(int iniX, int iniY) : swimmingObject(iniX, iniY)
     {
         reproductionRate = 20;
         randomnessX = 5;
@@ -227,7 +406,7 @@ public:
 class goldfishEater : public swimmingObject
 {
 public:
-    goldfishEater() : swimmingObject()
+    goldfishEater(int iniX, int iniY) : swimmingObject(iniX, iniY)
     {
         reproductionRate = 5;
         randomnessX = 2;
@@ -244,7 +423,7 @@ public:
 class dumbFish : public swimmingObject
 {
 public:
-    dumbFish() : swimmingObject()
+    dumbFish(int iniX, int iniY) : swimmingObject(iniX, iniY)
     {
         reproductionRate = 50;
         randomnessX = 2;
@@ -260,7 +439,7 @@ public:
 class disgustingFish : public swimmingObject
 {
 public:
-    disgustingFish() : swimmingObject()
+    disgustingFish(int iniX, int iniY) : swimmingObject(iniX, iniY)
     {
         width = 54;
         height = 23;
@@ -270,43 +449,76 @@ public:
     }
 };
 
-void spawn(int num, std::vector<swimmingObject> &spawnGroup, std::string name)
+class zombieFish : public swimmingObject
 {
+public:
+    zombieFish(int iniX, int iniY) : swimmingObject(iniX, iniY)
+    {
+        width = 54;
+        height = 23;
+        reproductionRate = 0;
+        texture = textures["zombieFish"].texture;
+        name = "disgustingFish";
+        isEdible = false;
+        isTurningZombie = true;
+        speed = 1;
+    }
+};
+
+void spawn(int num, std::string name, int posX, int posY)
+{
+
     if (totalFish < MAX_FISH)
     {
         for (int i = 0; i < num; ++i)
         {
             if (name == "basicFish")
             {
-                spawnGroup.push_back(basicFish());
+                spawnGroup.push_back(basicFish(posX, posY));
             }
             else if (name == "goldFish")
             {
-                spawnGroup.push_back(goldFish());
+                spawnGroup.push_back(goldFish(posX, posY));
             }
             else if (name == "crazyFish")
             {
-                spawnGroup.push_back(crazyFish());
+                spawnGroup.push_back(crazyFish(posX, posY));
+            }
+            else if (name == "freezingFish")
+            {
+                spawnGroup.push_back(freezingFish(posX, posY));
+            }
+            else if (name == "zombieFish")
+            {
+                spawnGroup.push_back(zombieFish(posX, posY));
+            }
+            else if (name == "healingFish")
+            {
+                spawnGroup.push_back(healingFish(posX, posY));
             }
             else if (name == "dumbFish")
             {
-                spawnGroup.push_back(dumbFish());
+                spawnGroup.push_back(dumbFish(posX, posY));
             }
             else if (name == "aggressiveFish")
             {
-                spawnGroup.push_back(aggressiveFish());
+                spawnGroup.push_back(aggressiveFish(posX, posY));
+            }
+            else if (name == "canibalFish")
+            {
+                spawnGroup.push_back(canibalFish(posX, posY));
             }
             else if (name == "disgustingFish")
             {
-                spawnGroup.push_back(disgustingFish());
+                spawnGroup.push_back(disgustingFish(posX, posY));
             }
             else if (name == "goldfishEater")
             {
-                spawnGroup.push_back(goldfishEater());
+                spawnGroup.push_back(goldfishEater(posX, posY));
             }
             else
             {
-                spawnGroup.push_back(swimmingObject());
+                spawnGroup.push_back(swimmingObject(posX, posY));
             }
             totalFish++;
         }
@@ -407,7 +619,7 @@ void spawnAll()
 {
     for (const auto &request : spawn_requests)
     {
-        spawn(request.first, spawnGroup, request.second);
+        spawn(request.first, request.second, 0, 0);
     }
 }
 
@@ -451,7 +663,7 @@ int main(int argc, char *args[])
 
                 for (auto &obj : spawnGroup)
                 {
-                    obj.updatePosition(spawnGroup);
+                    obj.updatePosition();
                 }
 
                 SDL_RenderClear(gRenderer);
